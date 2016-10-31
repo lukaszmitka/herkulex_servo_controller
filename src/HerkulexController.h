@@ -44,7 +44,7 @@
 #define DRS0101_MIN_POS 0 //steps
 #define DRS0101_MAX_POS 1023 // steps
 #define DRS0101_RESOLUTION 0.325 //degrees
-#define DRS0101_MIN_POS_DEG -166.650 //degrees
+#define DRS0101_MIN_POS_OFFSET 166.650 //degrees
 
 #include <string>
 #include "ComPortDriver.h"
@@ -71,6 +71,7 @@ public:
 
     void read_version();
 
+    void i_jog_control(u_char servo_id, u_int16_t position);
 
 private:
     bool comPort_opened;
@@ -105,7 +106,7 @@ private:
 
     void ram_write(u_char servo_id, std::vector<u_char> data);
 
-    void i_jog_control(u_char servo_id, u_int16_t position);
+
 };
 
 

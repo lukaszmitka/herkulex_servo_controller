@@ -7,5 +7,6 @@
 
 #include "HerkulexController.h"
 #include "ros/ros.h"
+#include "std_msgs/builtin_float.h"
 
 #endif //HERKULEX_SERVO_CONTROLLER_HERKULEX_SERVO_CONTROLLER_NODE_H
