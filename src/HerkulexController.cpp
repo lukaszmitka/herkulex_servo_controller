@@ -89,7 +89,7 @@ std::vector<u_char> HerkulexController::ram_read(u_char servo_id, std::vector<u_
    if (packet[0] == 0xFF && packet[1] == 0xFF) {
       tmp = comPortDriver->read_data(1);
       packet.insert(packet.end(), tmp.begin(), tmp.end());
-      if (tmp[0] > 0) {
+      if (tmp[0] > 0 && tmp[0] < 15) {
          tmp = comPortDriver->read_data(tmp[0] - 3);
          packet.insert(packet.end(), tmp.begin(), tmp.end());
       } else {
@@ -124,7 +124,7 @@ void HerkulexController::ram_write(u_char servo_id, std::vector<u_char> data) {
       std::cout << "Header OK... ";
       tmp = comPortDriver->read_data(1);
       packet.insert(packet.end(), tmp.begin(), tmp.end());
-      if (tmp[0] > 0) {
+      if (tmp[0] > 0 && tmp[0] < 15) {
 
          tmp = comPortDriver->read_data(tmp[0] - 3);
          packet.insert(packet.end(), tmp.begin(), tmp.end());
@@ -263,8 +263,7 @@ void HerkulexController::i_jog_control(u_char servo_id, u_int16_t position) {
       std::cout << "Header OK... ";
       tmp = comPortDriver->read_data(1);
       packet.insert(packet.end(), tmp.begin(), tmp.end());
-      if (tmp[0] > 0) {
-
+      if (tmp[0] > 0 && tmp[0] < 15) {
          tmp = comPortDriver->read_data(tmp[0] - 3);
          packet.insert(packet.end(), tmp.begin(), tmp.end());
       } else {
