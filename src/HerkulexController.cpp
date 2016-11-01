@@ -245,7 +245,7 @@ void HerkulexController::i_jog_control(u_char servo_id, u_int16_t position) {
    data.push_back((u_char) (position >> 8));
    data.push_back(0x04);
    data.push_back(servo_id);
-   data.push_back(0x3C);
+   data.push_back(0x00);
    packet = make_command_packet(servo_id, I_JOG, data);
 
    std::cout << "Send data: ";
@@ -276,6 +276,19 @@ void HerkulexController::i_jog_control(u_char servo_id, u_int16_t position) {
    }
    std::cout << std::endl;
    return;
+}
+
+u_int16_t HerkulexController::get_absolute_position(u_char servo_id) {
+   uint16_t abs_pos = 0;
+   std::cout << "get absolute position" << std::endl;
+   std::vector<u_char> data;
+   data.push_back(ABSOLUTE_POSITION_RAM_ADDR);
+   data.push_back(0x02);
+   data = ram_read(servo_id, data);
+   u_char hi_byte = data[8];
+   u_char low_byte = data[9];
+   abs_pos = (hi_byte << 8) + low_byte;
+   return abs_pos;
 }
 
 void HerkulexController::read_version() {

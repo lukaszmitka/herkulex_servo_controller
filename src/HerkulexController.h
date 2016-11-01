@@ -41,6 +41,8 @@
 #define MAX_POSITION_RAM_ADDR (u_char) 22
 #define MAX_POSITION_EEP_ADDR (u_char) 28
 
+#define ABSOLUTE_POSITION_RAM_ADDR (u_char) 60
+
 #define DRS0101_MIN_POS 0 //steps
 #define DRS0101_MAX_POS 1023 // steps
 #define DRS0101_RESOLUTION 0.325 //degrees
@@ -72,6 +74,8 @@ public:
     void read_version();
 
     void i_jog_control(u_char servo_id, u_int16_t position);
+
+    u_int16_t get_absolute_position(u_char servo_id);
 
 private:
     bool comPort_opened;

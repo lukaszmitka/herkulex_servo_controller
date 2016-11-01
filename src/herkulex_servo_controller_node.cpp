@@ -3,16 +3,14 @@
 //
 
 #include "herkulex_servo_controller_node.h"
-#include <iostream>
-#include <cstdlib>
-#include <unistd.h>
 
 HerkulexController *herkulexController;
 
+uint16_t position_goal = 0;
+
 void servo_control_callback(const std_msgs::Float32ConstPtr msg) {
    float degree = msg->data;
-   uint16_t pos = (uint16_t) (degree + DRS0101_MIN_POS_OFFSET) / DRS0101_RESOLUTION;
-   herkulexController->i_jog_control(253, pos);
+   position_goal = (uint16_t) (degree + DRS0101_MIN_POS_OFFSET) / DRS0101_RESOLUTION;
 }
 
 int main(int argc, char **argv) {
@@ -32,10 +30,21 @@ int main(int argc, char **argv) {
 
    ros::Rate loop_rate(10);
    while (ros::ok()) {
+      geometry_msgs::Quaternion quaternion;
+      tf::Vector3 vector(0, 0, 1);
+      u_int16_t abs_pos = herkulexController->get_absolute_position(253);
+      double current_pos = (((double) abs_pos) * DRS0101_RESOLUTION) - DRS0101_MIN_POS_OFFSET;
+      tf::Quaternion quat(vector, current_pos);
+      quaternion.x = quat.x();
+      quaternion.y = quat.y();
+      quaternion.z = quat.z();
+      quaternion.w = quat.w();
+      orientation_pub.publish(quaternion);
+
+      herkulexController->i_jog_control(253, position_goal);
       ros::spinOnce();
       loop_rate.sleep();
    }
-   //herkulexController->read_version();
 
    return 0;
 }
