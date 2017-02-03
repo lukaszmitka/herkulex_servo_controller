@@ -43,16 +43,26 @@
 
 #define ABSOLUTE_POSITION_RAM_ADDR (u_char) 60
 
-#define DRS0101_MIN_POS 0 //steps
-#define DRS0101_MAX_POS 1023 // steps
-#define DRS0101_RESOLUTION 0.325 //degrees/step
-#define DRS0101_ZERO_POS 512 // steps
+#define SERVO_TYPE_UNKNOWN 0
+#define SERVO_TYPE_DRS_0101 1
+#define SERVO_TYPE_DRS_0602 2
+
+#define DRS_0101_MIN_POS 0 // steps
+#define DRS_0101_MAX_POS 1023 // steps
+#define DRS_0101_RESOLUTION 0.325 // degrees/step
+#define DRS_0101_ZERO_POS 512 // steps
+
+#define DRS_0602_MIN_POS 10381 // steps
+#define DRS_0602_MAX_POS  22129 // steps
+#define DRS_0602_RESOLUTION 0.02778 // degrees/step
+#define DRS_0602_ZERO_POS 16384 // steps
 
 
 #include <string>
 #include <vector>
 #include <iostream>
 #include "serial/serial.h"
+#include <math.h>
 
 class HerkulexController {
 
@@ -62,14 +72,12 @@ public:
      * Left motor is to be connected to M1 output on Roboclaw board
      */
     //HerkulexController(int port_number);
-    HerkulexController(std::string port, int servo_id);
+    HerkulexController(std::string port, int servo_id, uint8_t servo_type, uint16_t timeout);
 
     ~HerkulexController();
 
     // fields
 private:
-    //int com_port_number;
-
     serial::Serial *my_serial;
     // functions
 public:
@@ -79,12 +87,24 @@ public:
 
     void i_jog_control(u_char servo_id, u_int16_t position);
 
+    void i_jog_control(u_char servo_id, double position);
+
     u_int16_t get_absolute_position(u_char servo_id);
+
+    double get_absolute_position_deg(u_char servo_id);
+
+    double get_absolute_position_rad(u_char servo_id);
 
 private:
     bool comPort_opened;
-
+    bool servo_detected;
+    u_char response_len;
     u_char internal_servo_id;
+    uint8_t internal_servo_type;
+    uint16_t internal_min_pos;
+    uint16_t internal_max_pos;
+    double internal_res;
+    uint16_t internal_zero;
 
     std::vector<u_char> make_command_packet(u_char servo_id, u_char command,
                                             std::vector<u_char> data);

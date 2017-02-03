@@ -6,13 +6,10 @@
 
 HerkulexController *herkulexController;
 
-uint16_t position_goal = 0;
+double position_goal = 0;
 
 void servo_control_callback(const std_msgs::Float32ConstPtr msg) {
-   float degree = msg->data;
-   //position_goal = (uint16_t) (degree + DRS0101_MIN_POS_OFFSET) / DRS0101_RESOLUTION;
-   //position_goal = (degree + 90);
-   position_goal = (degree / 0.02778) + 16384;
+   position_goal = msg->data;
 }
 
 int main(int argc, char **argv) {
@@ -83,12 +80,12 @@ int main(int argc, char **argv) {
    ros::Publisher servo_state_publisher = node_handle
          .advertise<sensor_msgs::JointState>(servo_state_topic, 1);
 
-   herkulexController = new HerkulexController("/dev/ttyUSB0", servo_id);
+   herkulexController = new HerkulexController("/dev/ttyUSB0", servo_id, SERVO_TYPE_DRS_0602, 100);
 
    ros::Rate loop_rate(50);
    while (ros::ok()) {
-      u_int16_t abs_pos = herkulexController->get_absolute_position(servo_id);
-      double current_pos = (((double) abs_pos) * DRS0101_RESOLUTION);
+      double current_pos = herkulexController->get_absolute_position_rad(servo_id);
+      std::cout << "Current pos" << current_pos << std::endl;
       sensor_msgs::JointState servo_state;
 
       servo_state.name.push_back(servo_base_frame);
@@ -97,11 +94,17 @@ int main(int argc, char **argv) {
 
       if (publish_tf) {
          tf::Transform transform;
-         transform.setOrigin(tf::Vector3(0.0, 0.0, z_offset));
+         tf::Vector3 v;
          tf::Quaternion q;
-         // switch from deg to rad
+
+         v.setX(0.0);
+         v.setY(0.0);
+         v.setZ(z_offset);
+         transform.setOrigin(v);
+
          q.setRPY(0, 0, current_pos);
          transform.setRotation(q);
+
          tf_broadcaster.sendTransform(
                tf::StampedTransform(transform, ros::Time::now(), servo_base_frame, servo_frame));
       }
