@@ -4,20 +4,24 @@
 
 #include "HerkulexController.h"
 
+HerkulexController::HerkulexController(std::string port, int servo_id) {
+   internal_servo_id = servo_id;
 
-HerkulexController::HerkulexController(int port_number) {
-   //std::cout << "Get ComPortDriver" << std::endl;
-   comPortDriver = new ComPortDriver(port_number);
-   if (comPortDriver->is_port_opened()) {
+   std::cout << "Create Serial instance" << std::endl;
+   my_serial = new serial::Serial("/dev/ttyUSB0", 115200, serial::Timeout::simpleTimeout(1000));
+
+   std::cout << "Check if port is opened" << std::endl;
+   if (my_serial->isOpen()) {
       comPort_opened = true;
-      set_ack_policy(253, ACK_POLICY_REPLY_TO_ALL);
-      set_min_position(253, 0);
-      set_max_position(253, 1023);
-      set_torque_control(253, TORQUE_CONTROL_TORQUE_ON);
-      get_status_error(253);
+      set_ack_policy(internal_servo_id, ACK_POLICY_REPLY_TO_ALL);
+      set_min_position(internal_servo_id, 0); // TODO - constants
+      set_max_position(internal_servo_id, 32767); // TODO - constants
+      set_torque_control(internal_servo_id, TORQUE_CONTROL_TORQUE_ON);
+      get_status_error(internal_servo_id);
+      get_absolute_position(internal_servo_id);
    } else {
       comPort_opened = false;
-      //std::cout << "Can not open ComPort" << std::endl;
+      std::cout << "Can not open serial port" << std::endl;
    }
 }
 
@@ -26,8 +30,8 @@ bool HerkulexController::has_acces_to_ComPort() {
 }
 
 HerkulexController::~HerkulexController() {
-   comPortDriver->flush_input();
-   comPortDriver->~ComPortDriver();
+   my_serial->flush();
+   my_serial->close();
 }
 
 void HerkulexController::calculate_checksum(u_char *checksum_1, u_char *checksum_2,
@@ -74,33 +78,35 @@ std::vector<u_char> HerkulexController::make_command_packet(u_char servo_id, u_c
 std::vector<u_char> HerkulexController::ram_read(u_char servo_id, std::vector<u_char> data) {
    std::vector<u_char> packet, tmp;
    packet = make_command_packet(servo_id, RAM_READ, data);
-
-   std::cout << "Send data: ";
+   std::cout << "Send data (RAM_READ): ";
    for (int i = 0; i < packet.size(); i++) {
       std::cout << " " << (int) packet[i];
    }
    std::cout << std::endl;
-
-
-   comPortDriver->flush_input();
-   comPortDriver->send_data(packet);
+   my_serial->flushInput();
+   my_serial->write(packet);
    packet.clear();
-   packet = comPortDriver->read_data(2);
-   if (packet[0] == 0xFF && packet[1] == 0xFF) {
-      tmp = comPortDriver->read_data(1);
-      packet.insert(packet.end(), tmp.begin(), tmp.end());
-      if (tmp[0] > 0 && tmp[0] < 15) {
-         tmp = comPortDriver->read_data(tmp[0] - 3);
+   my_serial->read(packet, 2);
+   if (packet.size() < 2) {
+      std::cout << "Not enugh data received" << std::endl;
+   }
+   else {
+      if (packet[0] == 0xFF && packet[1] == 0xFF) {
+         my_serial->read(tmp, 1);
          packet.insert(packet.end(), tmp.begin(), tmp.end());
-      } else {
-         std::cout << "Can not get proper response" << std::endl;
+         if (tmp[0] > 0 && tmp[0] < 15) {
+            my_serial->read(tmp, tmp[0] - 3);
+            packet.insert(packet.end(), tmp.begin(), tmp.end());
+         } else {
+            std::cout << "Can not get proper response" << std::endl;
+         }
       }
+      std::cout << "Received data: ";
+      for (int i = 0; i < packet.size(); i++) {
+         std::cout << " " << (int) packet[i];
+      }
+      std::cout << std::endl;
    }
-   std::cout << "Received data: ";
-   for (int i = 0; i < packet.size(); i++) {
-      std::cout << " " << (int) packet[i];
-   }
-   std::cout << std::endl;
    return packet;
 }
 
@@ -108,35 +114,35 @@ void HerkulexController::ram_write(u_char servo_id, std::vector<u_char> data) {
    // RAM_WRITE command - 0x03
    std::vector<u_char> packet, tmp;
    packet = make_command_packet(servo_id, RAM_WRITE, data);
-
    std::cout << "Send data (ram_write): ";
    for (int i = 0; i < packet.size(); i++) {
       std::cout << " " << (int) packet[i];
    }
    std::cout << std::endl;
-
-
-   comPortDriver->flush_input();
-   comPortDriver->send_data(packet);
+   my_serial->flushInput();
+   my_serial->write(packet);
    packet.clear();
-   packet = comPortDriver->read_data(2);
-   if (packet[0] == 0xFF && packet[1] == 0xFF) {
-      std::cout << "Header OK... ";
-      tmp = comPortDriver->read_data(1);
-      packet.insert(packet.end(), tmp.begin(), tmp.end());
-      if (tmp[0] > 0 && tmp[0] < 15) {
-
-         tmp = comPortDriver->read_data(tmp[0] - 3);
+   my_serial->read(packet, 2);
+   if (packet.size() < 2) {
+      std::cout << "Not enugh data received" << std::endl;
+   } else {
+      if (packet[0] == 0xFF && packet[1] == 0xFF) {
+         std::cout << "Header OK... ";
+         my_serial->read(tmp, 1);
          packet.insert(packet.end(), tmp.begin(), tmp.end());
-      } else {
-         std::cout << "Can not get proper response" << std::endl;
+         if (tmp[0] > 0 && tmp[0] < 15) {
+            my_serial->read(tmp, tmp[0] - 3);
+            packet.insert(packet.end(), tmp.begin(), tmp.end());
+         } else {
+            std::cout << "Can not get proper response" << std::endl;
+         }
       }
+      std::cout << "Received data: ";
+      for (int i = 0; i < packet.size(); i++) {
+         std::cout << " " << (int) packet[i];
+      }
+      std::cout << std::endl;
    }
-   std::cout << "Received data: ";
-   for (int i = 0; i < packet.size(); i++) {
-      std::cout << " " << (int) packet[i];
-   }
-   std::cout << std::endl;
    return;
 }
 
@@ -254,17 +260,16 @@ void HerkulexController::i_jog_control(u_char servo_id, u_int16_t position) {
    }
    std::cout << std::endl;
 
-
-   comPortDriver->flush_input();
-   comPortDriver->send_data(packet);
+   my_serial->flushInput();
+   my_serial->write(packet);
    packet.clear();
-   packet = comPortDriver->read_data(2);
+   my_serial->read(packet, 2);
    if (packet[0] == 0xFF && packet[1] == 0xFF) {
       std::cout << "Header OK... ";
-      tmp = comPortDriver->read_data(1);
+      my_serial->read(tmp, 1);
       packet.insert(packet.end(), tmp.begin(), tmp.end());
       if (tmp[0] > 0 && tmp[0] < 15) {
-         tmp = comPortDriver->read_data(tmp[0] - 3);
+         my_serial->read(tmp, tmp[0] - 3);
          packet.insert(packet.end(), tmp.begin(), tmp.end());
       } else {
          std::cout << "Can not get proper response" << std::endl;

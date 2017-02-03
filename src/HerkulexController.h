@@ -45,11 +45,14 @@
 
 #define DRS0101_MIN_POS 0 //steps
 #define DRS0101_MAX_POS 1023 // steps
-#define DRS0101_RESOLUTION 0.325 //degrees
-#define DRS0101_MIN_POS_OFFSET 166.650 //degrees
+#define DRS0101_RESOLUTION 0.325 //degrees/step
+#define DRS0101_ZERO_POS 512 // steps
+
 
 #include <string>
-#include "ComPortDriver.h"
+#include <vector>
+#include <iostream>
+#include "serial/serial.h"
 
 class HerkulexController {
 
@@ -58,15 +61,16 @@ public:
     /**
      * Left motor is to be connected to M1 output on Roboclaw board
      */
-    HerkulexController(int port_number);
+    //HerkulexController(int port_number);
+    HerkulexController(std::string port, int servo_id);
 
     ~HerkulexController();
 
     // fields
 private:
     //int com_port_number;
-    ComPortDriver *comPortDriver;
 
+    serial::Serial *my_serial;
     // functions
 public:
     bool has_acces_to_ComPort();
@@ -79,6 +83,8 @@ public:
 
 private:
     bool comPort_opened;
+
+    u_char internal_servo_id;
 
     std::vector<u_char> make_command_packet(u_char servo_id, u_char command,
                                             std::vector<u_char> data);
