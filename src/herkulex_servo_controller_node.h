@@ -18,12 +18,14 @@
 #define DEFAULT_Z_OFFSET 0
 #define DEFAULT_POSITION_GOAL "herkulex_goal"
 #define DEFAULT_STATE_TOPIC "servo_state"
+#define DEFAULT_SERIAL_PORT "/dev/ttyUSB0"
 
 bool publish_tf;
-int servo_id; //int servo_id = 253; // DRS0101 // int servo_id = 219; // DRS0602
+int servo_id;
 std::string servo_frame;
 std::string servo_base_frame;
 std::string position_goal_topic;
 std::string servo_state_topic;
+std::string serial_port;
 double z_offset;
 #endif //HERKULEX_SERVO_CONTROLLER_HERKULEX_SERVO_CONTROLLER_NODE_H

@@ -74,13 +74,20 @@ int main(int argc, char **argv) {
       std::cout << "Publishing to " << servo_state_topic << " topic." << std::endl;
    }
 
+   node_handle.param<std::string>("serial_port", serial_port, DEFAULT_SERIAL_PORT);
+   if (node_handle.getParam("serial_port", serial_port)) {
+      std::cout << "Connnecting to port: " << serial_port << "" << std::endl;
+   } else {
+      std::cout << "Connnecting to port: " << serial_port << "" << std::endl;
+   }
+
 
    ros::Subscriber position_subscriber = node_handle.subscribe(
          position_goal_topic, 1, servo_control_callback);
    ros::Publisher servo_state_publisher = node_handle
          .advertise<sensor_msgs::JointState>(servo_state_topic, 1);
 
-   herkulexController = new HerkulexController("/dev/ttyUSB0", servo_id, SERVO_TYPE_DRS_0602, 100);
+   herkulexController = new HerkulexController(serial_port, servo_id, SERVO_TYPE_DRS_0602, 100);
 
    ros::Rate loop_rate(50);
    while (ros::ok()) {
