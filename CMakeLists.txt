@@ -20,8 +20,17 @@ include_directories(
         ${catkin_INCLUDE_DIRS}
 )
 
+
+add_executable(servo_waggle src/waggle_node.cpp)
+
 add_executable(servo_controller src/herkulex_servo_controller_node.cpp src/HerkulexController.cpp)
 
+
 target_link_libraries(servo_controller
+        ${catkin_LIBRARIES}
+        )
+
+
+target_link_libraries(servo_waggle
         ${catkin_LIBRARIES}
         )
